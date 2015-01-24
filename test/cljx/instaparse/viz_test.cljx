@@ -1,4 +1,5 @@
 (ns instaparse.viz-test
+  (:use clojure.test)
   (:require instaparse.core)
   #+clj (:use instaparse.viz))
 
@@ -30,6 +31,13 @@
               leaf: #'a+'
               " :output-format :hiccup))
 
+(def make-tree-special ;; for testing special chars in node description
+     "simple tree parser"
+     (instaparse.core/parser "tree: node*
+              node: leaf | <'('> node (<'('> node <')'>)* node* <')'>
+              leaf: #'[^()]+'
+              " :output-format :hiccup))
+
 #+clj
 (defn view-test-trees [t]
   (tree-viz (make-tree-e "((a)((a)))(a)"))
@@ -43,3 +51,9 @@
   (tree-viz (make-tree-e ""))
   (Thread/sleep t)
   (tree-viz (make-tree-se "")))
+
+(deftest create_buffered_images
+  (testing "works — returns a java.awt.image.BufferedImage"
+    (is (#'instaparse.viz/hiccup-tree-viz (make-tree-special "((no)(escaping)(needed)(here))") {})))
+  (testing "should be fixed — returns nil, but needs be a java.awt.image.BufferedImage"
+    (is (#'instaparse.viz/hiccup-tree-viz (make-tree-special "((a)(\"string\")(requiring)(escaping))") {}))))
